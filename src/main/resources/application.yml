@@ -1,4 +1,3 @@
-# ?? ?? ??
 spring:
   config:
     activate:
@@ -7,6 +6,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
+
+ffmpeg:
+  location: /opt/homebrew/Cellar/ffmpeg/7.0_1/bin/ffmpeg
+ffprobe:
+  location: /opt/homebrew/Cellar/ffmpeg/7.0_1/bin/ffprobe
 
 ---
 
@@ -20,7 +24,6 @@ spring:
       ddl-auto: update
 
 ---
-# ?? ??
 spring:
   profiles:
     active: local
