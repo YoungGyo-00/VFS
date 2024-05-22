@@ -19,7 +19,7 @@ def get_image():
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     current_time = localtime()
-    timestamp = strftime("%Y_%m_%d_%H", current_time)
+    timestamp = strftime("%Y_%m_%d_%H_%M_%S", current_time)
 
     print("length :", length)
     print("width :", width)
@@ -39,11 +39,10 @@ def get_image():
 
         if ret:
             # 0.1초에 1번씩 캡처
-            if cv2.waitKey(1000):
+            if cv2.waitKey(100):
                 count += 1
                 current_time = localtime()
-                captured_time = strftime("%M%S_", current_time)
-                filename = captured_time + str(count) + ".jpg"
+                filename = str(count) + ".jpg"
                 filepath = os.path.join(FILEPATH, timestamp, filename)
                 cv2.imwrite(filepath, image)
             cv2.imshow("Camera", image)
