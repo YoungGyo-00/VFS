@@ -22,6 +22,7 @@ public class FFmpegConfig {
     public FFmpeg ffmpeg() throws IOException {
         FFmpeg ffmpeg = new FFmpeg(ffmpegLocation);
         Assert.isTrue(ffmpeg.isFFmpeg());
+        log.debug("FFmpeg init complete");
         return ffmpeg;
     }
 
@@ -29,6 +30,7 @@ public class FFmpegConfig {
     public FFprobe ffprobe() throws IOException {
         FFprobe ffprobe = new FFprobe(ffprobeLocation);
         Assert.isTrue(ffprobe.isFFprobe());
+        log.debug("FFprobe init complete");
         return ffprobe;
     }
 }
