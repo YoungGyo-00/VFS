@@ -32,6 +32,7 @@ dependencies {
 	implementation 'mysql:mysql-connector-java:8.0.32'
 
 	implementation 'net.bramp.ffmpeg:ffmpeg:0.6.2'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
 
 tasks.named('test') {
