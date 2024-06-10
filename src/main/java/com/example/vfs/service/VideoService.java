@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 public class VideoService {
     private final FFmpeg ffmpeg;
     private static String outputPath = "data/video/output.mp4";
-
+    
     public void imagesToVideo(VideoRequestDto videoRequestDto) throws IOException {
         String inputPath = videoRequestDto.getFilePath();
         String inputPattern = inputPath + "/%d.jpg"; // 1.jpg, 2.jpg 등 순차적 이미지 파일 패턴
