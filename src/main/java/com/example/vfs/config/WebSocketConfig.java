@@ -17,7 +17,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 클라이언트가 WebSocket Handshake connection을 생성할 Endpoint
-        registry.addEndpoint("/api/fit")
+        registry.addEndpoint("/signaling")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
