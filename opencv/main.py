@@ -1,4 +1,5 @@
 import cv2
+from flask import Flask, Response
 from time import localtime, strftime
 import os
 
@@ -19,7 +20,7 @@ def get_image():
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     current_time = localtime()
-    timestamp = strftime("%Y_%m_%d_%H", current_time)
+    timestamp = strftime("%Y_%m_%d_%H_%M_%S", current_time)
 
     print("length :", length)
     print("width :", width)
@@ -39,11 +40,10 @@ def get_image():
 
         if ret:
             # 0.1초에 1번씩 캡처
-            if cv2.waitKey(1000):
+            if cv2.waitKey(100):
                 count += 1
                 current_time = localtime()
-                captured_time = strftime("%M%S_", current_time)
-                filename = captured_time + str(count) + ".jpg"
+                filename = str(count) + ".jpg"
                 filepath = os.path.join(FILEPATH, timestamp, filename)
                 cv2.imwrite(filepath, image)
             cv2.imshow("Camera", image)
@@ -57,4 +57,27 @@ def get_image():
     cv2.destroyAllWindows()
 
 
-get_image()
+def generate_frames():
+    camera = cv2.VideoCapture(0)
+    while True:
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode(".jpg", frame)
+            frame = buffer.tobytes()
+            yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
+
+
+app = Flask(__name__)
+
+
+@app.route("/video")
+def video():
+    return Response(
+        generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5001)
