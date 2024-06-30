@@ -11,7 +11,8 @@ ffmpeg:
   location: /opt/homebrew/Cellar/ffmpeg/7.0_1/bin/ffmpeg
 ffprobe:
   location: /opt/homebrew/Cellar/ffmpeg/7.0_1/bin/ffprobe
-
+server:
+  port: 8080
 ---
 
 spring:

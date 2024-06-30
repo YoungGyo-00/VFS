@@ -9,16 +9,13 @@ let localStream = undefined;
 // 웹캠 시작
 const startLocalStream = async () =>{
     if(navigator.mediaDevices !== undefined){
-        await navigator.mediaDevices.getUserMedia({ audio: true, video : true })
+        await navigator.mediaDevices.getUserMedia({ audio: true, video : false })
             .then(async (stream) => {
                 console.log('Stream found');
-                // 웹캠 스트림 정보를 글로벌 변수로 저장한다.
+                // 웹캠 스트림 정보를 글로벌 변수로 저장.
                 localStream = stream;
-                // Disable the microphone by default
                 stream.getAudioTracks()[0].enabled = true;
                 localStreamElement.srcObject = localStream;
-                // Connect after making sure that local stream is availble
-
             }).catch(error => {
                 console.error("Error accessing media devices:", error);
             });
@@ -41,9 +38,8 @@ const connectSocket = async () =>{
             const message = JSON.parse(candidate.body).body;
             console.log(`iceCandidate peer 교환 URL : /topic/peer/iceCandidate/${myKey}/${roomId}`)
 
-            // 해당 key에 해당되는 peer 에 받은 정보를 addIceCandidate 해준다.
+            // 해당 key에 해당되는 peer 에 받은 정보를 addIceCandidate
             pcListMap.get(key).addIceCandidate(new RTCIceCandidate({candidate:message.candidate,sdpMLineIndex:message.sdpMLineIndex,sdpMid:message.sdpMid}));
-
         });
                 
         // offer peer 교환을 위한 subscribe
@@ -51,16 +47,16 @@ const connectSocket = async () =>{
             const key = JSON.parse(offer.body).key;
             const message = JSON.parse(offer.body).body;
             console.log(`Offer Peer 교환 URL /topic/peer/offer/${myKey}/${roomId}`)
-            // 해당 key에 새로운 peerConnection 를 생성해준후 pcListMap 에 저장해준다.
-            pcListMap.set(key,createPeerConnection(key));
-            // 생성한 peer 에 offer정보를 setRemoteDescription 해준다.
+            // 해당 key에 새로운 peerConnection 를 생성해준후 pcListMap 에 저장
+            pcListMap.set(key, createPeerConnection(key));
+            // 생성한 peer 에 offer정보를 setRemoteDescription
             pcListMap.get(key).setRemoteDescription(new RTCSessionDescription({type:message.type,sdp:message.sdp}));
-            // sendAnswer 함수를 호출해준다.
+            // sendAnswer 함수를 호출
             sendAnswer(pcListMap.get(key), key);
 
         });
                 
-        //answer peer 교환을 위한 subscribe
+        // answer peer 교환을 위한 subscribe
         stompClient.subscribe(`/topic/peer/answer/${myKey}/${roomId}`, answer =>{
             const key = JSON.parse(answer.body).key;
             const message = JSON.parse(answer.body).body;
@@ -69,15 +65,15 @@ const connectSocket = async () =>{
             pcListMap.get(key).setRemoteDescription(new RTCSessionDescription(message));
 
         });
-                
-        //key를 보내라는 신호를 받은 subscribe
+
+        // key를 보내라는 신호를 받은 subscribe
         stompClient.subscribe(`/topic/call/key`, message =>{
-            //자신의 key를 보내는 send
+            // 자신의 key를 보내는 send
             stompClient.send(`/app/send/key`, {}, JSON.stringify(myKey));
 
         });
                 
-        //상대방의 key를 받는 subscribe
+        // 상대방의 key를 받는 subscribe
         stompClient.subscribe(`/topic/send/key`, message => {
             const key = JSON.parse(message.body);
             console.log(myKey !== key);

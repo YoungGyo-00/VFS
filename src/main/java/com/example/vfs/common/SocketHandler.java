@@ -31,17 +31,18 @@ public class SocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         try {
-            WebSocketMessage webSocketMessage = WebSocketMessage.builder()
-                    .from("Server")
-                    .type(MSG_TYPE_JOIN)
-                    .data(null)
-                    .candidate(null)
-                    .sdp(null)
-                    .build();
-            String json = objectMapper.writeValueAsString(webSocketMessage);
-            session.sendMessage(new TextMessage(json));
-            sessions.add(session);
-        } catch (IOException e) {
+            log.info("[ws] Session has been established");
+//            WebSocketMessage webSocketMessage = WebSocketMessage.builder()
+//                    .from("Server")
+//                    .type(MSG_TYPE_JOIN)
+//                    .data(null)
+//                    .candidate(null)
+//                    .sdp(null)
+//                    .build();
+//            String json = objectMapper.writeValueAsString(webSocketMessage);
+//            session.sendMessage(new TextMessage(json));
+//            sessions.add(session);
+        } catch (Exception e) {
             log.error("An error occured: {}", e.getMessage());
         }
     }
@@ -50,15 +51,15 @@ public class SocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
         log.info("[ws] Session has been closed with status [{} {}]", status, session);
-        WebSocketMessage webSocketMessage = WebSocketMessage.builder()
-                .from("Server")
-                .type(MSG_TYPE_LEAVE)
-                .data(null)
-                .candidate(null)
-                .sdp(null)
-                .build();
-        String json = objectMapper.writeValueAsString(webSocketMessage);
-        session.sendMessage(new TextMessage(json));
+//        WebSocketMessage webSocketMessage = WebSocketMessage.builder()
+//                .from("Server")
+//                .type(MSG_TYPE_LEAVE)
+//                .data(null)
+//                .candidate(null)
+//                .sdp(null)
+//                .build();
+//        String json = objectMapper.writeValueAsString(webSocketMessage);
+//        session.sendMessage(new TextMessage(json));
         sessions.remove(session);
     }
 

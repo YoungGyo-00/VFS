@@ -2,6 +2,7 @@ package com.example.vfs.service;
 
 import com.example.vfs.dto.video.request.VideoRequestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class VideoService {
@@ -23,8 +25,8 @@ public class VideoService {
         String inputPath = videoRequestDto.getFilePath();
         String inputPattern = inputPath + "/%d.jpg"; // 1.jpg, 2.jpg 등 순차적 이미지 파일 패턴
 
-        System.out.println("Input Path: " + inputPath);
-        System.out.println("Input Pattern: " + inputPattern);
+        log.info("Input Path: " + inputPath);
+        log.info("Input Pattern: " + inputPattern);
 
         // 입력 경로에 파일이 존재하는지 확인
         if (!Files.exists(Paths.get(inputPath))) {
@@ -45,7 +47,7 @@ public class VideoService {
             FFmpegExecutor executor = new FFmpegExecutor(ffmpeg);
             executor.createJob(builder).run();
         } catch (Exception e) {
-            System.out.println(e);
+            log.error("An error occured: {}", e.getMessage());
         }
         return;
     }
