@@ -14,7 +14,7 @@ import java.util.Base64;
 @Component
 public class SocketHandler extends TextWebSocketHandler {
 
-    private static final int FRAME_DELAY_MS = 100;
+    private static final int FRAME_DELAY_MS = 30;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
@@ -34,6 +34,8 @@ public class SocketHandler extends TextWebSocketHandler {
                             if (buffer[i] == (byte) 0xFF && i + 1 < bytesRead && buffer[i + 1] == (byte) 0xD9) {  // JPEG 종료
                                 baos.write(buffer, 0, i + 2);
                                 byte[] imageBytes = baos.toByteArray();
+
+                                log.info("이미지 생성 완료. 이미지 크기: {} bytes", imageBytes.length);
 
                                 String base64Image = Base64.getEncoder().encodeToString(imageBytes);
                                 session.sendMessage(new TextMessage("data:image/jpeg;base64," + base64Image));

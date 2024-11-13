@@ -41,3 +41,5 @@ secrets.yml
 .env.local
 .idea
 front/node_modules/*
+/app/unet/dataset/*
+/app/unet/output/*
