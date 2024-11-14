@@ -9,7 +9,7 @@ from flask import Flask, Response, request
 from flask_cors import CORS
 from torchvision import transforms
 from unet import model
-from openpose.main import PoseEstimator
+# from openpose.main import PoseEstimator
 import base64
 
 
@@ -23,7 +23,7 @@ CORS(app)
 # model.to(DEVICE)
 # model.eval()
 
-pose_estimator = PoseEstimator()
+# pose_estimator = PoseEstimator()
 
 preprocess = transforms.Compose(
     [
