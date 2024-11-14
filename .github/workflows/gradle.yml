@@ -29,8 +29,10 @@ jobs:
       - name: web docker build and push
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker build -t younggyolee/vfs .
+          docker build -t younggyolee/vfs -f Dockerfile .
+          docker build -t younggyolee/vfs-flask -f Dockerfile-py .
           docker push younggyolee/vfs
+          docker push younggyolee/vfs-flask
 
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
@@ -51,6 +53,9 @@ jobs:
             ## docker-compose 실행
             sudo chmod 666 /var/run/docker.sock
             sudo docker rm -f $(docker ps -qa)
+            
             sudo docker pull younggyolee/vfs
+            sudo docker pull younggyolee/vfs-flask
+            
             docker-compose -f docker-compose.yml --env-file ./.env up -d
             docker image prune -f

@@ -43,6 +43,9 @@ spring:
         show_sql: true
         format_sql: true
         default_batch_fetch_size: 1000
+  websocket:
+    message-size-limit: 2MB
+    buffer-size-limit: 2MB
 
 springdoc:
   api-docs:

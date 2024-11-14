@@ -5,11 +5,12 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import torch
 import cv2
 import numpy as np
-from flask import Flask, Response
+from flask import Flask, Response, request
 from flask_cors import CORS
 from torchvision import transforms
 from unet import model
 from openpose.main import PoseEstimator
+import base64
 
 
 app = Flask(__name__)
@@ -71,6 +72,29 @@ def video():
     return Response(
         generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame"
     )
+
+
+@app.route("/process_frame", methods=["POST"])
+def process_frame():
+    data = request.data  # 바이너리 데이터를 그대로 사용
+
+    try:
+        # 이미지 디코딩
+        nparr = np.frombuffer(data, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    except Exception as e:
+        print("Error: Failed to decode image.", e)
+        return "Failed to decode image", 400
+
+    if frame is None:
+        print("Error: Frame is None after decoding.")
+        return "Failed to decode image", 400
+
+    # 응답 이미지 처리 및 인코딩
+    _, buffer = cv2.imencode(".jpg", frame)
+    response_data = base64.b64encode(buffer).decode("utf-8")
+
+    return response_data
 
 
 if __name__ == "__main__":
