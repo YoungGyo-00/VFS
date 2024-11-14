@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: checkout
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Set up JDK 17
@@ -23,39 +23,47 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with Gradle
+      - name: Build Spring Boot Application with Gradle
         run: ./gradlew bootJar
 
-      - name: web docker build and push
+      - name: Build Flask Docker Image
+        run: |
+          docker build -t younggyolee/vfs-flask -f Dockerfile-py .
+
+      - name: Build Spring Boot Docker Image
+        run: |
+          docker build -t younggyolee/vfs-springboot -f Dockerfile .
+
+      - name: Push Flask Docker Image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker build -t younggyolee/vfs -f Dockerfile .
-          docker build -t younggyolee/vfs-flask -f Dockerfile-py .
-          docker push younggyolee/vfs
           docker push younggyolee/vfs-flask
 
-      - name: executing remote ssh commands using password
+      - name: Push Spring Boot Docker Image
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push younggyolee/vfs-springboot
+
+      - name: Deploy to Remote Server via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ubuntu
           key: ${{ secrets.KEY }}
           script: |
-            
             cd /home/ubuntu/
 
             sudo touch .env.dev
             echo "${{ secrets.ENV_VARS }}" | sudo tee .env.dev > /dev/null
-            
+
             sudo touch docker-compose.yml
             echo "${{ vars.DOCKER_COMPOSE }}" | sudo tee docker-compose.yml > /dev/null
-            
-            ## docker-compose 실행
+
             sudo chmod 666 /var/run/docker.sock
             sudo docker rm -f $(docker ps -qa)
-            
-            sudo docker pull younggyolee/vfs
+
             sudo docker pull younggyolee/vfs-flask
-            
-            docker-compose -f docker-compose.yml --env-file ./.env up -d
+            sudo docker pull younggyolee/vfs-springboot
+
+            docker-compose -f docker-compose.yml --env-file ./.env.dev up -d
             docker image prune -f
