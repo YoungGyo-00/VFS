@@ -1,33 +1,22 @@
 const serverUrl = 'ws://127.0.0.1:8080/signaling';
 const canvas = document.getElementById('localStreamCanvas');
 const context = canvas.getContext('2d');
-const videoSettings = { width: 320, height: 240, frameInterval: 30 };
+const videoSettings = { width: 640, height: 480, frameInterval: 30000 };
 
 let socket;
 let isStreaming = false;
-let videoStream = null;
 let chunkSize = 8000;
-
-const initializeVideoStream = async () => {
-    const video = document.createElement('video');
-    video.width = videoSettings.width;
-    video.height = videoSettings.height;
-
-    try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = videoStream;
-        video.play();
-        video.addEventListener('play', () => sendFrame(video));
-    } catch (error) {
-        console.error('Error accessing webcam:', error);
-    }
-};
 
 const sendFrame = (video) => {
     if (!isStreaming) return;
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const frame = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+    const offscreenCanvas = document.createElement('canvas');
+    const offscreenContext = offscreenCanvas.getContext('2d');
+    offscreenCanvas.width = videoSettings.width;
+    offscreenCanvas.height = videoSettings.height;
+
+    offscreenContext.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+    const frame = offscreenCanvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
     const totalChunks = Math.ceil(frame.length / chunkSize);
 
@@ -59,11 +48,21 @@ const setupWebSocket = () => {
 const handleSocketOpen = () => {
     console.log('WebSocket connection established');
     isStreaming = true;
-    initializeVideoStream();
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+            video.addEventListener('play', () => sendFrame(video));
+        })
+        .catch((error) => {
+            console.error('Error accessing webcam:', error);
+        });
 };
 
 const handleSocketMessage = (event) => {
-    console.log('displayFrame Success');
+    console.log('Frame received from server');
     displayFrame(`data:image/jpeg;base64,${event.data}`);
 };
 
@@ -74,11 +73,6 @@ const handleSocketError = (error) => {
 const handleSocketClose = (event) => {
     console.log('WebSocket connection closed', event);
     isStreaming = false;
-
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-    }
 };
 
 const displayFrame = (base64Image) => {

@@ -5,81 +5,28 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import torch
 import cv2
 import numpy as np
-from flask import Flask, Response, request
+from PIL import Image
+from flask import Flask, request
 from flask_cors import CORS
-from torchvision import transforms
-from unet import model
-# from openpose.main import PoseEstimator
+import time
 import base64
 
+
+from openpose.main import PoseEstimator
+from graphonomy.exp.inference.inference import GraphonomyModel
 
 app = Flask(__name__)
 CORS(app)
 
-# DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
-# model_path = "unet/output/models/unet_epoch_40.pth"
-# model = model.UNet(in_channels=3, out_channels=1)
-# model.load_state_dict(torch.load(model_path, map_location=DEVICE))
-# model.to(DEVICE)
-# model.eval()
-
-# pose_estimator = PoseEstimator()
-
-preprocess = transforms.Compose(
-    [
-        transforms.ToPILImage(),
-        transforms.Resize((256, 256)),
-        transforms.ToTensor(),
-    ]
-)
-
-
-def postprocess(output):
-    output = output.squeeze().cpu().detach().numpy()
-    output = (output * 255).astype(np.uint8)
-    return output
-
-
-def generate_frames():
-    camera = cv2.VideoCapture(0)
-    if not camera.isOpened():
-        print("Error: Could not open video.")
-        return
-
-    while camera.isOpened():
-        success, frame = camera.read()
-        if not success:
-            break
-
-        output_image, _ = pose_estimator.estimate_pose(frame)
-        # input_image = preprocess(frame).unsqueeze(0).to(DEVICE)
-
-        # with torch.no_grad():
-        #     output = model(input_image)
-
-        # output_image = postprocess(output)
-        print("프레임 생성")
-
-        ret, buffer = cv2.imencode(".jpg", output_image)
-        frame = buffer.tobytes()
-        yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-
-    camera.release()
-
-
-@app.route("/video")
-def video():
-    return Response(
-        generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame"
-    )
+pose_estimator = PoseEstimator()
+graphonomy_model = GraphonomyModel()
 
 
 @app.route("/process_frame", methods=["POST"])
 def process_frame():
-    data = request.data  # 바이너리 데이터를 그대로 사용
+    data = request.data
 
     try:
-        # 이미지 디코딩
         nparr = np.frombuffer(data, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     except Exception as e:
@@ -90,11 +37,29 @@ def process_frame():
         print("Error: Frame is None after decoding.")
         return "Failed to decode image", 400
 
-    # 응답 이미지 처리 및 인코딩
-    _, buffer = cv2.imencode(".jpg", frame)
-    response_data = base64.b64encode(buffer).decode("utf-8")
+    # 여기 부분에 모델로 변환하는 코드 작성할 예정이야
+    try:
+        pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-    return response_data
+        # 1. openpose 를 통한 몸의 좌표 찾기
+        keypoints = pose_estimator.estimate_pose(frame)
+
+        # 2. Graphonomy를 사용하여 세그멘테이션 수행
+        segmentation_result, gray_result = graphonomy_model.inference(pil_image)
+        _, buffer_segmentation = cv2.imencode(".jpg", segmentation_result)
+        _, buffer_gray = cv2.imencode(".jpg", gray_result)
+        segmentation_b64 = base64.b64encode(buffer_segmentation).decode("utf-8")
+        gray_b64 = base64.b64encode(buffer_gray).decode("utf-8")
+
+        _, buffer = cv2.imencode(".jpg", frame)
+
+        response_data = base64.b64encode(buffer).decode("utf-8")
+
+        return segmentation_b64
+
+    except Exception as e:
+        print(f"Error processing frame: {e}")
+        return "Error processing frame", 500
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import cv2
-import sys, os
+import os
 
 
 class PoseEstimator:
@@ -31,8 +31,8 @@ class PoseEstimator:
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
         self.proto_file = os.path.join(current_dir, "pose_deploy_linevec.prototxt")
-        self.weights_file = os.path.join(current_dir, "pose_iter_440000.caffemodel")
-        self.threshold = 0.2
+        self.weights_file = os.path.join(current_dir, "../pose_iter_440000.caffemodel")
+        self.threshold = 0.1
 
         if not os.path.exists(self.proto_file):
             raise FileNotFoundError(f"Proto file not found: {self.proto_file}")
@@ -56,7 +56,7 @@ class PoseEstimator:
         out_height, out_width = out.shape[2], out.shape[3]
         frame_height, frame_width = frame.shape[:2]
 
-        points = []
+        pose_keypoints = []
         for i in range(len(self.BODY_PARTS_COCO)):
             prob_map = out[0, i, :, :]
 
@@ -66,21 +66,8 @@ class PoseEstimator:
             y = int((frame_height * point[1]) / out_height)
 
             if prob > self.threshold:
-                cv2.circle(
-                    frame, (x, y), 5, (0, 255, 255), thickness=-1, lineType=cv2.FILLED
-                )
-                cv2.putText(
-                    frame,
-                    str(i),
-                    (x, y),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 0, 255),
-                    1,
-                    lineType=cv2.LINE_AA,
-                )
-                points.append((x, y))
+                pose_keypoints.extend([float(x), float(y), float(prob)])
             else:
-                points.append(None)
+                pose_keypoints.extend([0.0, 0.0, 0.0])
 
-        return frame, points
+        return pose_keypoints
